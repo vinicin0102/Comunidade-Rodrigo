@@ -4,16 +4,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Community from "./pages/Community";
-import Ranking from "./pages/Ranking";
-import Rewards from "./pages/Rewards";
-import AICopy from "./pages/AICopy";
-import AICreative from "./pages/AICreative";
-import Support from "./pages/Support";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
+import Index from "./Index";
+import Auth from "./Auth";
+import Community from "./Community";
+import Ranking from "./Ranking";
+import Rewards from "./Rewards";
+import AICopy from "./AICopy";
+import AICreative from "./AICreative";
+import Support from "./Support";
+import Profile from "./Profile";
+import NotFound from "./NotFound";
 
 const queryClient = new QueryClient();
 
