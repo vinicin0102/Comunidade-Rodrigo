@@ -65,12 +65,26 @@ const Community = () => {
   }, []);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current && messages.length > 0) {
+      // Scroll para a última mensagem com um pequeno delay para garantir renderização
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
     }
-    // Debug: verificar mensagens
-    console.log('Mensagens carregadas:', messages.length, messages);
   }, [messages]);
+
+  // Scroll para o final quando o componente montar e mensagens carregarem
+  useEffect(() => {
+    if (!loading && messages.length > 0 && scrollRef.current) {
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 200);
+    }
+  }, [loading]);
 
   const fetchMessages = async () => {
     try {
@@ -97,6 +111,13 @@ const Community = () => {
       })) || [];
 
       setMessages(messagesWithProfiles);
+      
+      // Scroll para o final após carregar mensagens
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 300);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -111,16 +132,33 @@ const Community = () => {
 
   const fetchMessageProfile = async (newMsg: Message) => {
     try {
+      // Verificar se a mensagem já existe para evitar duplicatas
+      setMessages(prev => {
+        const exists = prev.some(msg => msg.id === newMsg.id);
+        if (exists) return prev;
+        return prev; // Retornar prev temporariamente, vamos atualizar depois
+      });
+
+      // Buscar perfil
       const { data: profile } = await supabase
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', newMsg.user_id)
         .single();
 
-      setMessages(prev => [...prev, { ...newMsg, profiles: profile || undefined }]);
+      // Adicionar mensagem com perfil
+      setMessages(prev => {
+        const exists = prev.some(msg => msg.id === newMsg.id);
+        if (exists) return prev;
+        return [...prev, { ...newMsg, profiles: profile || undefined }];
+      });
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setMessages(prev => [...prev, newMsg]);
+      setMessages(prev => {
+        const exists = prev.some(msg => msg.id === newMsg.id);
+        if (exists) return prev;
+        return [...prev, newMsg];
+      });
     }
   };
 
@@ -243,7 +281,7 @@ const Community = () => {
       
       {/* Mobile Header */}
       <div className="md:hidden pt-safe-top md:pt-2 pb-3 px-3 border-b border-border bg-background flex-shrink-0">
-        <h1 className="text-lg font-bold text-gradient-fire">
+        <h1 className="text-lg font-bold text-foreground">
           Comunidade
         </h1>
         <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -254,7 +292,7 @@ const Community = () => {
       {/* Desktop Header */}
       <div className="hidden md:block max-w-6xl mx-auto w-full px-4 pt-6">
         <div className="text-center space-y-2 mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-gradient-fire">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
             Comunidade Aberta
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -316,7 +354,7 @@ const Community = () => {
                           <AvatarFallback
                             className={cn(
                               "text-[11px] md:text-[13px] font-bold w-full h-full",
-                              isOwn ? "bg-gradient-fire text-white" : "bg-gray-200 text-gray-700"
+                              isOwn ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             )}
                           >
                             {initials}
@@ -333,7 +371,7 @@ const Community = () => {
                           <span
                             className={cn(
                               "text-xs md:text-[13px] font-semibold px-1.5",
-                              isOwn ? "text-primary" : "text-gray-500"
+                              isOwn ? "text-primary" : "text-muted-foreground"
                             )}
                           >
                             {isOwn ? 'Você' : username}
@@ -343,8 +381,8 @@ const Community = () => {
                               "rounded-2xl px-3 py-2 md:px-3 md:py-2",
                               "break-words max-w-full",
                               isOwn 
-                                ? "bg-gradient-fire shadow-sm" 
-                                : "bg-white border border-gray-200 shadow-sm"
+                                ? "bg-primary text-primary-foreground shadow-sm" 
+                                : "bg-card border border-border shadow-sm"
                             )}
                           >
                             {message.content && (
@@ -352,7 +390,7 @@ const Community = () => {
                                 className={cn(
                                   "text-sm md:text-base leading-relaxed whitespace-pre-wrap",
                                   "break-words overflow-wrap-break-word",
-                                  isOwn ? "text-white" : "text-black",
+                                  isOwn ? "text-primary-foreground" : "text-foreground",
                                   "m-0 font-normal block opacity-100"
                                 )}
                               >
@@ -380,7 +418,7 @@ const Community = () => {
                                   backgroundColor: 'transparent',
                                   border: 'none',
                                   cursor: 'pointer',
-                                  color: isOwn ? '#ffffff' : '#000000',
+                                  color: isOwn ? 'var(--primary-foreground)' : 'var(--foreground)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '8px'
@@ -485,7 +523,7 @@ const Community = () => {
               <Button 
                 type="submit"
                 disabled={!newMessage.trim() && !pendingImage && !pendingAudio}
-                className="gradient-fire hover:opacity-90 h-9 w-9 md:h-10 md:w-10 p-0"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 w-9 md:h-10 md:w-10 p-0"
               >
                 <Send className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
